@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import numpy as np
 import matplotlib.pyplot as plt
 from typing import Union, Any
 
@@ -51,16 +52,14 @@ def min_x_max_y(tuple1, tuple2):
 
     return min_x, max_y
 
+
 def nyquist_plot(df: pd.DataFrame) -> Union[Any, Any]:
     """Create nyquist plot from a pandas dataframe"""
     fig, ax = plt.subplots()
-    ax.plot(df["Z'/ohm"], df['Z"/ohm']*-1)
+    ax.plot(df["Z'/ohm"], df['Z"/ohm'] * -1)
 
     # Each axis range should be equal
     new_limit = min_x_max_y(ax.get_xlim(), ax.get_ylim())
-    print(ax.get_xlim())
-    print(ax.get_ylim())
-    print(new_limit)
     ax.set_xlim(new_limit)
     ax.set_ylim(new_limit)
 
@@ -76,7 +75,7 @@ def compare_nyquist(df_list: list[pd.DataFrame]) -> Union[Any, Any]:
 
     fig, ax = plt.subplots()
     for df in df_list:
-        ax.plot(df["Z'/ohm"], df['Z"/ohm']*-1)
+        ax.plot(df["Z'/ohm"], df['Z"/ohm'] * -1)
 
     ax.set_xlabel("Z'/ohm")
     ax.set_ylabel('-Z"/ohm')
@@ -87,47 +86,69 @@ def compare_nyquist(df_list: list[pd.DataFrame]) -> Union[Any, Any]:
 def bode_plot(df: pd.DataFrame) -> Union[Any, Any]:
     """Makes single nyquist plot from list of pandas dataframes"""
 
-    fig, axes = plt.subplots(2,1)
-    axes[0].plot(df["Z'/ohm"], df['Z"/ohm']*-1)
-    axes[0].set_xlabel("Z'/ohm")
-    axes[0].set_ylabel('-Z"/ohm')
+    fig, axes = plt.subplots(2, 1, figsize=(7, 6.66))
+    x = np.log10(df['Freq/Hz'])
+
+    # Log(|Z|) vs Log(Frequency)
+    axes[0].plot(x, np.log10(df["Z/ohm"].abs()))
+    axes[0].set_ylim(0, 7)
+    axes[0].set_xlabel("log(Freq/Hz)")
+    axes[0].set_ylabel("log(Z/ohm)")
     axes[0].spines[['right', 'top']].set_visible(False)
 
-    axes[1].plot(df["Z'/ohm"], df['Z"/ohm'] * -1)
-    axes[1].set_xlabel("Z'/ohm")
-    axes[1].set_ylabel('-Z"/ohm')
+    # -Phase vs Log(Frequency)
+    axes[1].plot(x, df['Phase/deg'] * -1)
+    axes[1].set_xlabel("log(Freq/Hz)")
+    axes[1].set_ylabel('-Phase/deg')
     axes[1].spines[['right', 'top']].set_visible(False)
     return fig, axes
 
 
+def bode_plot_overlay(df: pd.DataFrame) -> Union[Any, Any]:
+    """Makes single nyquist plot from list of pandas dataframes"""
+
+    fig, ax1 = plt.subplots(figsize=(3.33, 3.33))
+    ax2 = ax1.twinx()
+    x = np.log10(df['Freq/Hz'])
+
+    # Log(|Z|) vs Log(Frequency)
+    ax1.plot(x, np.log10(df["Z/ohm"].abs()), color='black', label='|Z|')
+    # ax1.set_ylim(0, 7)
+    ax1.set_xlabel("log(Freq/Hz)")
+    ax1.set_ylabel("log(Z/ohm)")
+
+    # -Phase vs Log(Frequency)
+    ax2.plot(x, df['Phase/deg'] * -1, color='red', label='phase')
+    # ax2.set_ylim(ax2.get_ylim()[0] - 40, ax2.get_ylim()[1] + 40)
+    ax2.set_xlabel("log(Freq/Hz)")
+    ax2.set_ylabel('-Phase/deg')
+    fig.legend(loc="upper right", bbox_to_anchor=(1,1), bbox_transform=ax1.transAxes)
+
+    return fig, ax1
+
 def main():
     path = "data/11/"
     files = get_file_paths(path)
-    file = files[0]
+    file = files[1]
     df, file_information = open_file_as_df(file)
 
     # Create a nyquist plot
-    nyquist_fig, nyquist_ax = nyquist_plot(df)
-    nyquist_ax.set_title(file)
-    plt.show()
+    nyquist = False
+    if nyquist:
+        nyquist_fig, nyquist_ax = nyquist_plot(df)
+        nyquist_ax.set_title(file)
+        plt.show()
 
-    """
-    # Process many files
-    dataframes = []
-    for file in files:
-        df, info = open_file_as_df(file)
-        dataframes.append(df)
-    
-    # print(df)
-    fig, ax = compare_nyquist(dataframes)
-    ax.set_title(files)
-    plt.show()
-    #
-    # bode_plot(df)
-    # plt.show()
-    # # If you want to save the DataFrame to a CSV file
-    # df.to_csv('trial_1.csv', index=False)
-    """
+    # Create a Bode plot
+    bode = True
+    if bode:
+        # bode_fig, bode_ax = bode_plot(df)
+        # bode_ax[0].set_title(file)
+
+        bode_fig, bode_ax = bode_plot_overlay(df)
+        bode_ax.set_title(file)
+        plt.show()
+
 
 if __name__ == "__main__":
     main()
