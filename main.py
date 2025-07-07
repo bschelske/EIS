@@ -193,7 +193,8 @@ def compare_both(df_list: list[pd.DataFrame]) -> Union[Any, Any]:
     ax1[1].set_ylabel("log(Z/ohm)")
     # ax2.set_ylim(ax2.get_ylim()[0] - 40, ax2.get_ylim()[1] + 40)
     ax2.set_xlabel("log(Freq/Hz)")
-    ax2.set_ylabel('-Phase/deg')
+    ax2.set_ylabel('-Phase/deg', color='red')
+    ax2.tick_params(labelcolor='red')
 
     # fig.legend(loc="lower left", bbox_to_anchor=(0, 0), bbox_transform=ax1[1].transAxes, frameon=False)
 
@@ -201,11 +202,11 @@ def compare_both(df_list: list[pd.DataFrame]) -> Union[Any, Any]:
 
 
 def main():
-    path = "data/7/"
-    files = get_file_paths(path)
-    file = files[0]
-    df, file_information = open_file_as_df(file)
-    df.to_csv("7.csv")
+    path = "data/capacitor/"
+    # files = get_file_paths(path)
+    # file = files[0]
+    # df, file_information = open_file_as_df(file)
+    # df.to_csv("7.csv")
 
 
     # Create a nyquist plot
@@ -231,10 +232,12 @@ def main():
         both_fig, both_ax = nyquist_and_bode(df)
         plt.show()
 
-    both_comparison = False
+    both_comparison = True
     if both_comparison:
-        device = "resistor"
-        path = f"data/{device}/"
+        device = "capacitor"
+        # path = f"data/73 uScm cytobuffer/{device}/"
+        path = f"data/capacitor/"
+
         files = get_file_paths(path)
         df_list = []
         print(files)
@@ -245,7 +248,8 @@ def main():
 
         fig, ax = compare_both(df_list)
         plt.show()
-        fig.savefig(f"C:/Users/bensc/Desktop/Local Research/EIS/plots/{device}_bn.png")
+        save_fig_path = f"C:/Users/bensc/Desktop/Local Research/EIS/plots/{device}_bn.png"
+        fig.savefig(save_fig_path)
 
 
 if __name__ == "__main__":
